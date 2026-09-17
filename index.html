@@ -76,6 +76,7 @@ input:focus,textarea:focus{
   border-color:var(--ink-soft);
   background:#fff;
 }
+input:disabled,textarea:disabled{background:var(--paper-alt);color:var(--ink-soft);}
 textarea{min-height:110px;resize:vertical;line-height:1.7;}
 .btn{
   display:inline-block;
@@ -110,6 +111,17 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
   display:none;
 }
 .error-msg.show{display:block;}
+.notice-msg{
+  background:var(--ok-soft);
+  color:var(--ok);
+  border:1px solid var(--ok);
+  padding:10px 14px;
+  border-radius:2px;
+  font-size:14px;
+  margin-bottom:16px;
+  display:none;
+}
+.notice-msg.show{display:block;}
 .count-badge{
   display:inline-block;
   font-size:12.5px;
@@ -198,11 +210,12 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
   font-size:14.5px;
   white-space:pre-wrap;
 }
-.status-note{
-  text-align:center;
-  padding:40px 20px;
-  color:var(--ink-soft);
-}
+.status-note{padding:10px 0;}
+.status-note h2{text-align:center;}
+.status-note > p.desc{text-align:center;color:var(--ink-soft);margin-bottom:24px;}
+.readonly-answers .answer-block{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);}
+.readonly-answers .q{font-size:13px;color:var(--ink-soft);margin-bottom:4px;}
+.readonly-answers .a{font-size:14.5px;white-space:pre-wrap;}
 
 /* 관리자 대시보드 */
 .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--line);}
@@ -261,9 +274,13 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
 .ai-box{margin:14px 0;}
 .ai-output{background:var(--paper-alt);padding:12px 14px;font-size:13.5px;white-space:pre-wrap;border-radius:2px;margin-top:8px;display:none;}
 .ai-output.show{display:block;}
-.toggle-switch{display:flex;align-items:center;gap:10px;}
+.edit-toggle-row{display:flex;align-items:center;gap:10px;background:var(--paper-alt);padding:10px 14px;border-radius:2px;margin-bottom:16px;}
+.edit-toggle-row .txt{font-size:13.5px;}
 .small-note{font-size:12.5px;color:var(--ink-soft);}
 .link-btn{background:none;border:none;color:var(--ink-soft);font-size:12.5px;text-decoration:underline;cursor:pointer;padding:0;}
+.class-control-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:16px 0;}
+.class-control-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:2px;background:#fff;}
+.class-control-item label{font-size:14px;}
 @media (max-width:600px){
   .criteria-row{grid-template-columns:1fr;}
   .app{padding:20px 14px 60px;}
@@ -332,7 +349,7 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
     </div>
   </div>
 
-  <!-- 학생 대기/결과 -->
+  <!-- 학생 대기/결과/열람 -->
   <div class="view" id="view-student-status">
     <div class="card">
       <div class="status-note" id="status-note-content"></div>
@@ -342,9 +359,10 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
   <!-- 학생 작성 -->
   <div class="view" id="view-student-write">
     <div class="card">
+      <div class="notice-msg" id="editing-notice">선생님이 답안 수정을 허용했습니다. 내용을 고친 뒤 다시 제출해 주세요.</div>
       <div class="topic-box">
         <strong>주제: 우리 사회의 문제를 바꾸는 한 편의 청원글</strong><br>
-        국회 또는 법무부에 제출한다고 가정하고, 아래 다섯 가지 질문에 순서대로 답하며 청원글을 완성해 보세요.
+        국회 또는 법무부에 제출한다고 가정하고, 아래 네 가지 질문에 순서대로 답하며 청원글을 완성해 보세요.
         글자 수 기준을 채우지 못해도 제출은 가능하지만, 글자 수 자체도 채점에 반영됩니다.
       </div>
 
@@ -365,9 +383,9 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
       </div>
 
       <div class="q-block">
-        <span class="q-num">3</span><span class="q-title">나의 입장 및 구체적 청원 내용 (국회/법무부에 바라는 점)</span>
+        <span class="q-num">3</span><span class="q-title">문제 상황에 대한 나의 입장 및 구체적 청원 내용 작성 (청원의 필요성 및 기대 효과 작성)</span>
         <div style="margin-top:10px;">
-          <textarea id="q-stance" placeholder="문제 상황에 대한 나의 입장과, 국회 또는 법무부에 바라는 구체적인 내용을 200자 이상 적어 주세요."></textarea>
+          <textarea id="q-stance" placeholder="문제 상황에 대한 나의 입장, 국회/법무부에 바라는 구체적인 내용, 이 청원이 필요한 이유와 받아들여졌을 때의 기대 효과를 200자 이상 적어 주세요."></textarea>
           <div class="count-badge" id="count-stance">0자 / 최소 200자</div>
         </div>
       </div>
@@ -376,14 +394,6 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
         <span class="q-num">4</span><span class="q-title">나의 주장에 대한 근거 (2가지 이상, 각 100자 이상)</span>
         <div id="evidence-list" style="margin-top:10px;"></div>
         <button class="btn secondary small add-evidence" onclick="addEvidence()">+ 근거 추가하기</button>
-      </div>
-
-      <div class="q-block">
-        <span class="q-num">5</span><span class="q-title">기대 효과</span>
-        <div style="margin-top:10px;">
-          <textarea id="q-effect" placeholder="이 청원이 받아들여진다면 어떤 변화가 생길지 적어 주세요."></textarea>
-          <div class="count-badge" id="count-effect">0자</div>
-        </div>
       </div>
 
       <div class="footer-actions">
@@ -437,13 +447,15 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
 
     <div class="tab-panel" id="tab-control">
       <div class="card">
-        <h2>작성 제어</h2>
-        <div class="toggle-switch" style="margin-top:14px;">
-          <input type="checkbox" id="writing-enabled-toggle" onchange="saveSettings()">
-          <label for="writing-enabled-toggle">전체 학생 작성 가능</label>
+        <h2>반별 작성 제어</h2>
+        <p class="small-note">반을 끄면 해당 반 학생은 새로 접속하거나 이어서 작성할 수 없습니다. 이미 제출한 답안에는 영향을 주지 않습니다. (반 번호는 학번의 2~3번째 자리로 자동 구분됩니다)</p>
+        <div class="row" style="margin-top:14px;">
+          <button class="btn secondary small" onclick="setAllClasses(true)">전체 반 켜기</button>
+          <button class="btn secondary small" onclick="setAllClasses(false)">전체 반 끄기</button>
         </div>
-        <p class="small-note">체크를 해제하면 아직 제출하지 않은 학생은 새로 접속하거나 이어서 작성할 수 없습니다. 이미 제출한 답안에는 영향을 주지 않습니다.</p>
-        <p class="small-note" style="margin-top:16px;">개별 학생의 답안을 다시 작성하게 하려면 [답안 관리] 탭에서 해당 학생을 펼친 뒤 "다시 작성 허용" 버튼을 눌러 주세요.</p>
+        <div class="class-control-grid" id="class-control-grid"></div>
+        <button class="btn stamp" onclick="saveClassControl()">반별 설정 저장</button>
+        <span class="small-note" id="control-saved-note" style="margin-left:10px;"></span>
       </div>
     </div>
   </div>
@@ -455,11 +467,8 @@ textarea{min-height:110px;resize:vertical;line-height:1.7;}
 // ▼▼▼ Apps Script 배포 후 발급되는 웹 앱 URL로 반드시 교체하세요 ▼▼▼
 const API_URL = 'https://script.google.com/macros/s/AKfycbwtbTgvza29ESnq1kw1TWhmOxUhU4B7QXanaBRJeX3uqiA1BvKsnONaktuwHraVX1aqhw/exec';
 
-const QUESTION_LABELS = {
-  title:'청원 제목', situation:'문제 상황 및 선택 이유', stance:'입장 및 청원 내용',
-  evidence:'근거', effect:'기대 효과'
-};
 const MIN_LEN = { situation:100, stance:200, evidencePer:100 };
+const CLASS_CONTROL_RANGE = [1,2,3,4,5,6,7,8,9,10]; // 제어 탭에 표시할 반 번호 범위. 학교 학급 수에 맞게 조절하세요.
 
 /* ===================== 공통 유틸 ===================== */
 function countNoSpace(str){ return (str||'').replace(/\s/g,'').length; }
@@ -476,7 +485,6 @@ async function api(action, payload){
 function goView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
-  const tag = {student:'학생', admin:'관리자'};
   document.getElementById('role-tag').textContent = name.startsWith('student') ? '학생' : name.startsWith('admin') ? '관리자' : '';
 }
 
@@ -487,11 +495,18 @@ function showError(id, msg){
 }
 function hideError(id){ document.getElementById(id).classList.remove('show'); }
 
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 /* ===================== 학생 세션 상태 ===================== */
 let session = null; // {studentId, name, password}
-let draft = { title:'', situation:'', stance:'', evidence:['',''], effect:'' };
+let draft = { title:'', situation:'', stance:'', evidence:['',''] };
 let violationCount = 0;
 let autosaveTimer = null;
+let isEditingSubmitted = false;
 
 /* ---------- 로그인 ---------- */
 async function studentLogin(){
@@ -513,9 +528,10 @@ async function studentLogin(){
     if(res.mode === 'write'){
       draft = res.draft || draft;
       if(!draft.evidence || draft.evidence.length < 2) draft.evidence = ['',''];
+      isEditingSubmitted = !!res.editing;
       enterWriteView();
     } else if(res.mode === 'waiting'){
-      showStatusView('제출이 완료되었습니다', '담당 선생님이 채점을 마치면 이 화면에서 점수와 피드백을 확인할 수 있습니다.');
+      showWaitingView(res.answers);
     } else if(res.mode === 'result'){
       showResultView(res);
     }
@@ -526,33 +542,45 @@ async function studentLogin(){
   }
 }
 
-function showStatusView(title, desc){
-  document.getElementById('status-note-content').innerHTML =
-    '<h2>'+title+'</h2><p>'+desc+'</p>';
-  goView('student-status');
+function renderReadOnlyAnswers(answers){
+  let html = '<div class="readonly-answers">';
+  html += answerBlockPlain('1. 청원 제목', answers.title);
+  html += answerBlockPlain('2. 문제 상황 및 선택 이유', answers.situation);
+  html += answerBlockPlain('3. 입장 및 청원 내용 (필요성·기대 효과 포함)', answers.stance);
+  (answers.evidence||[]).forEach((e,i)=>{
+    html += answerBlockPlain('4-'+(i+1)+'. 근거', e);
+  });
+  html += '</div>';
+  return html;
+}
+function answerBlockPlain(label, text){
+  return '<div class="answer-block"><div class="q">'+label+'</div><div class="a">'+escapeHtml(text||'(미작성)')+'</div></div>';
 }
 
-function showResultView(res){
-  const s = res.scores || {};
-  let html = '<h2>채점 결과</h2>';
-  html += '<div class="result-score"><div class="num">'+(res.totalScore||0)+'<span style="font-size:22px;">점</span></div><div class="label">최종 점수</div></div>';
-  html += '<div class="feedback-box">'+ (res.teacherFeedback ? escapeHtml(res.teacherFeedback) : '작성된 피드백이 없습니다.') +'</div>';
+function showWaitingView(answers){
+  let html = '<h2>제출이 완료되었습니다</h2>';
+  html += '<p class="desc">담당 선생님이 채점을 마치면 이 화면에서 점수와 피드백을 확인할 수 있습니다. 아래는 내가 제출한 내용입니다.</p>';
+  html += renderReadOnlyAnswers(answers);
   document.getElementById('status-note-content').innerHTML = html;
   goView('student-status');
 }
 
-function escapeHtml(str){
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
+function showResultView(res){
+  let html = '<h2>채점 결과</h2>';
+  html += '<div class="result-score"><div class="num">'+(res.totalScore||0)+'<span style="font-size:22px;">점</span></div><div class="label">최종 점수</div></div>';
+  html += '<div class="feedback-box">'+ (res.teacherFeedback ? escapeHtml(res.teacherFeedback) : '작성된 피드백이 없습니다.') +'</div>';
+  html += '<h3 style="margin-top:24px;">내가 제출한 답안</h3>';
+  html += renderReadOnlyAnswers(res.answers || {});
+  document.getElementById('status-note-content').innerHTML = html;
+  goView('student-status');
 }
 
 /* ---------- 작성 화면 ---------- */
 function enterWriteView(){
+  document.getElementById('editing-notice').classList.toggle('show', isEditingSubmitted);
   document.getElementById('q-title').value = draft.title || '';
   document.getElementById('q-situation').value = draft.situation || '';
   document.getElementById('q-stance').value = draft.stance || '';
-  document.getElementById('q-effect').value = draft.effect || '';
   renderEvidence();
   updateAllCounts();
   goView('student-write');
@@ -587,9 +615,13 @@ function addEvidence(){
 
 function onFieldInput(){ updateAllCounts(); }
 
-['q-title','q-situation','q-stance','q-effect'].forEach(id=>{
-  document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', ()=>{
+  ['q-title','q-situation','q-stance'].forEach(id=>{
     document.getElementById(id).addEventListener('input', onFieldInput);
+  });
+  document.getElementById('violation-resume-btn').addEventListener('click', ()=>{
+    document.getElementById('violation-overlay').classList.remove('show');
+    writingLocked = false;
   });
 });
 
@@ -597,12 +629,10 @@ function updateAllCounts(){
   const title = document.getElementById('q-title').value;
   const situation = document.getElementById('q-situation').value;
   const stance = document.getElementById('q-stance').value;
-  const effect = document.getElementById('q-effect').value;
 
   setCount('count-title', countNoSpace(title), 0);
   setCount('count-situation', countNoSpace(situation), MIN_LEN.situation);
   setCount('count-stance', countNoSpace(stance), MIN_LEN.stance);
-  setCount('count-effect', countNoSpace(effect), 0);
 
   document.querySelectorAll('.evidence-textarea').forEach((t,i)=>{
     setCount('count-evidence-'+i, countNoSpace(t.value), MIN_LEN.evidencePer);
@@ -626,20 +656,17 @@ function collectDraft(){
     title: document.getElementById('q-title').value,
     situation: document.getElementById('q-situation').value,
     stance: document.getElementById('q-stance').value,
-    evidence: Array.from(document.querySelectorAll('.evidence-textarea')).map(t=>t.value),
-    effect: document.getElementById('q-effect').value
+    evidence: Array.from(document.querySelectorAll('.evidence-textarea')).map(t=>t.value)
   };
 }
 
 function collectCounts(d){
-  const c = {
+  return {
     title: countNoSpace(d.title),
     situation: countNoSpace(d.situation),
     stance: countNoSpace(d.stance),
-    effect: countNoSpace(d.effect),
     evidence: d.evidence.map(countNoSpace)
   };
-  return c;
 }
 
 function startAutosave(){
@@ -659,7 +686,7 @@ function startAutosave(){
 async function confirmSubmit(){
   const d = collectDraft();
   if(!d.title.trim()){ alert('청원 제목을 입력해 주세요.'); return; }
-  const ok = confirm('제출 후에는 답안을 수정할 수 없습니다. 제출하시겠습니까?');
+  const ok = confirm('제출 후에는 선생님이 별도로 허용하기 전까지 답안을 수정할 수 없습니다. 제출하시겠습니까?');
   if(!ok) return;
   const counts = collectCounts(d);
   const btn = document.getElementById('submit-btn');
@@ -668,7 +695,7 @@ async function confirmSubmit(){
     const res = await api('submitAnswer', Object.assign({}, session, {draft:d, counts, violations:violationCount}));
     if(!res.ok){ alert(res.message); btn.disabled=false; btn.textContent='제출하기'; return; }
     clearInterval(autosaveTimer);
-    showStatusView('제출이 완료되었습니다', '담당 선생님이 채점을 마치면 이 화면에서 점수와 피드백을 확인할 수 있습니다.');
+    showWaitingView(d);
   }catch(e){
     alert('제출 중 오류가 발생했습니다. 다시 시도해 주세요.');
     btn.disabled = false; btn.textContent = '제출하기';
@@ -696,13 +723,6 @@ async function handleViolation(){
     try{ await api('logViolation', session); }catch(e){}
   }
 }
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  document.getElementById('violation-resume-btn').addEventListener('click', ()=>{
-    document.getElementById('violation-overlay').classList.remove('show');
-    writingLocked = false;
-  });
-});
 
 /* ---------- 부정행위 방지: 중복 탭 감지 ---------- */
 let tabLocked = false;
@@ -761,7 +781,7 @@ async function adminLogin(){
     goView('admin-dashboard');
     loadCriteria();
     loadSubmissions();
-    loadSettings();
+    loadClassControl();
   }catch(e){
     showError('admin-login-error','서버에 연결할 수 없습니다.');
   }
@@ -776,10 +796,9 @@ function switchTab(name){
 /* ---- 평가 기준 ---- */
 const DEFAULT_CRITERIA = [
   {key:'title', label:'청원 제목', maxScore:10, rubric:'주제와 문제의식이 명확히 드러나는 제목인가'},
-  {key:'situation', label:'문제 상황 및 선택 이유', maxScore:20, rubric:'문제 상황을 구체적으로 서술하고 선택 이유가 타당한가 (100자 이상)'},
-  {key:'stance', label:'입장 및 청원 내용', maxScore:25, rubric:'입장이 분명하고 청원 내용이 구체적인가 (200자 이상)'},
-  {key:'evidence', label:'근거', maxScore:25, rubric:'근거가 2가지 이상이며 각각 타당하고 구체적인가 (각 100자 이상)'},
-  {key:'effect', label:'기대 효과', maxScore:20, rubric:'청원이 받아들여졌을 때의 효과를 구체적으로 서술했는가'}
+  {key:'situation', label:'문제 상황 및 선택 이유', maxScore:25, rubric:'문제 상황을 구체적으로 서술하고 선택 이유가 타당한가 (100자 이상)'},
+  {key:'stance', label:'입장 및 청원 내용', maxScore:30, rubric:'입장이 분명하고, 청원의 필요성과 기대 효과를 포함해 구체적으로 서술했는가 (200자 이상)'},
+  {key:'evidence', label:'근거', maxScore:35, rubric:'근거가 2가지 이상이며 각각 타당하고 구체적인가 (각 100자 이상)'}
 ];
 
 async function loadCriteria(){
@@ -818,12 +837,9 @@ async function saveCriteria(){
 }
 
 /* ---- 답안 관리 ---- */
-let submissionsCache = [];
-
 async function loadSubmissions(){
   const res = await api('getSubmissions', {adminPassword});
   if(!res.ok){ alert(res.message); return; }
-  submissionsCache = res.list;
   renderClassGroups(res.list);
 }
 
@@ -851,7 +867,7 @@ function renderClassGroups(list){
       const badgeClass = s.status==='채점완료'?'graded':(s.status==='제출완료'?'submitted':'writing');
       row.innerHTML =
         '<span>'+s.studentId+' '+escapeHtml(s.name)+'</span>'+
-        '<span class="badge '+badgeClass+'">'+s.status+(s.violations>0?' · 이탈 '+s.violations+'회':'')+'</span>';
+        '<span class="badge '+badgeClass+'">'+s.status+(s.violations>0?' · 이탈 '+s.violations+'회':'')+(s.editAllowed?' · 수정허용':'')+'</span>';
       row.addEventListener('click', ()=>toggleDetail(row, s));
       body.appendChild(row);
     });
@@ -873,15 +889,21 @@ function toggleDetail(row, s){
 }
 
 function renderDetailHtml(s){
-  const c = s.counts || {};
   let html = '';
-  html += answerBlock('청원 제목', s.title, c.title);
-  html += answerBlock('문제 상황 및 선택 이유', s.situation, c.situation, MIN_LEN.situation);
-  html += answerBlock('입장 및 청원 내용', s.stance, c.stance, MIN_LEN.stance);
+
+  if(s.status !== '작성중'){
+    html += '<div class="edit-toggle-row">';
+    html += '<input type="checkbox" id="edit-allow-'+s.studentId+'" class="edit-allow-checkbox" '+(s.editAllowed?'checked':'')+'>';
+    html += '<label for="edit-allow-'+s.studentId+'" class="txt">이 학생의 답안 수정 허용 (켜두면 학생이 접속 시 다시 작성해 제출할 수 있습니다)</label>';
+    html += '</div>';
+  }
+
+  html += answerBlock('청원 제목', s.title, s.counts && s.counts.title);
+  html += answerBlock('문제 상황 및 선택 이유', s.situation, s.counts && s.counts.situation, MIN_LEN.situation);
+  html += answerBlock('입장 및 청원 내용', s.stance, s.counts && s.counts.stance, MIN_LEN.stance);
   (s.evidence||[]).forEach((e,i)=>{
-    html += answerBlock('근거 '+(i+1), e, (c.evidence||[])[i], MIN_LEN.evidencePer);
+    html += answerBlock('근거 '+(i+1), e, s.counts && s.counts.evidence && s.counts.evidence[i], MIN_LEN.evidencePer);
   });
-  html += answerBlock('기대 효과', s.effect, c.effect);
 
   html += '<div class="ai-box">';
   html += '<button class="btn secondary small ai-btn">AI 1차 피드백 생성 (관리자 전용)</button>';
@@ -894,21 +916,15 @@ function renderDetailHtml(s){
   html += gradeRow('situation','문제 상황 및 선택 이유', scores.situation);
   html += gradeRow('stance','입장 및 청원 내용', scores.stance);
   html += gradeRow('evidence','근거', scores.evidence);
-  html += gradeRow('effect','기대 효과', scores.effect);
 
   html += '<div class="field"><label>2차 피드백 (학생에게 공개됩니다)</label><textarea class="teacher-feedback">'+escapeHtml(s.teacherFeedback||'')+'</textarea></div>';
   html += '<div class="total-line"><span>총점 (자동 합산)</span><span class="total-score-display">'+(s.totalScore||0)+'점</span></div>';
-  html += '<div class="row">';
   html += '<button class="btn stamp save-grade-btn">점수 · 피드백 저장</button>';
-  if(s.status === '채점완료'){
-    html += '<button class="btn secondary reopen-btn">다시 작성 허용</button>';
-  }
-  html += '</div>';
   return html;
 }
 
 function answerBlock(label, text, count, min){
-  const countText = (count!==undefined) ? (' · '+count+'자'+(min?(' / 최소 '+min+'자'):'')) : '';
+  const countText = (count!==undefined && count!==null) ? (' · '+count+'자'+(min?(' / 최소 '+min+'자'):'')) : '';
   return '<div class="answer-block"><div class="q">'+label+countText+'</div><div class="a">'+escapeHtml(text||'(미작성)')+'</div></div>';
 }
 
@@ -917,6 +933,16 @@ function gradeRow(key, label, value){
 }
 
 function bindDetailEvents(detail, s){
+  const editCheckbox = detail.querySelector('.edit-allow-checkbox');
+  if(editCheckbox){
+    editCheckbox.addEventListener('change', async ()=>{
+      editCheckbox.disabled = true;
+      const res = await api('setEditAllowed', {adminPassword, studentId:s.studentId, allowed: editCheckbox.checked});
+      if(!res.ok){ alert(res.message); editCheckbox.checked = !editCheckbox.checked; }
+      editCheckbox.disabled = false;
+    });
+  }
+
   detail.querySelector('.ai-btn').addEventListener('click', async (e)=>{
     e.target.disabled = true; e.target.textContent = '생성 중...';
     try{
@@ -950,28 +976,42 @@ function bindDetailEvents(detail, s){
     if(res.ok){ alert('저장되었습니다.'); loadSubmissions(); }
     else alert(res.message);
   });
-
-  const reopenBtn = detail.querySelector('.reopen-btn');
-  if(reopenBtn){
-    reopenBtn.addEventListener('click', async ()=>{
-      if(!confirm('이 학생이 답안을 다시 작성할 수 있도록 허용할까요?')) return;
-      const res = await api('reopenStudent', {adminPassword, studentId:s.studentId});
-      if(res.ok){ alert('다시 작성이 허용되었습니다.'); loadSubmissions(); }
-      else alert(res.message);
-    });
-  }
 }
 
-/* ---- 제어 ---- */
-async function loadSettings(){
+/* ---- 제어(반별) ---- */
+async function loadClassControl(){
   const res = await api('getSettings', {adminPassword});
-  if(res.ok){
-    document.getElementById('writing-enabled-toggle').checked = !!res.settings.writingEnabled;
-  }
+  const map = (res.ok && res.settings && res.settings.classWritingEnabled) ? res.settings.classWritingEnabled : {};
+  renderClassControlGrid(map);
 }
-async function saveSettings(){
-  const enabled = document.getElementById('writing-enabled-toggle').checked;
-  await api('saveSettings', {adminPassword, writingEnabled: enabled});
+
+function renderClassControlGrid(map){
+  const wrap = document.getElementById('class-control-grid');
+  wrap.innerHTML = '';
+  CLASS_CONTROL_RANGE.forEach(num=>{
+    const enabled = Object.prototype.hasOwnProperty.call(map, String(num)) ? map[String(num)] !== false : true;
+    const item = document.createElement('div');
+    item.className = 'class-control-item';
+    item.innerHTML =
+      '<input type="checkbox" id="class-ctrl-'+num+'" data-class="'+num+'" '+(enabled?'checked':'')+'>'+
+      '<label for="class-ctrl-'+num+'">'+num+'반</label>';
+    wrap.appendChild(item);
+  });
+}
+
+function setAllClasses(enabled){
+  document.querySelectorAll('#class-control-grid input[type=checkbox]').forEach(cb=>{ cb.checked = enabled; });
+}
+
+async function saveClassControl(){
+  const map = {};
+  document.querySelectorAll('#class-control-grid input[type=checkbox]').forEach(cb=>{
+    map[cb.dataset.class] = cb.checked;
+  });
+  const res = await api('saveSettings', {adminPassword, classWritingEnabled: map});
+  const note = document.getElementById('control-saved-note');
+  note.textContent = res.ok ? '저장되었습니다.' : ('오류: '+res.message);
+  setTimeout(()=>note.textContent='', 3000);
 }
 </script>
 </body>
